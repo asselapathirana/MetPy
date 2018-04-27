@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>metpy.calc.tools &mdash; MetPy 0.6</title>
+  <title>metpy.calc.tools &mdash; MetPy 0.7</title>
   
 
   
@@ -43,7 +43,7 @@
         <link rel="index" title="Index"
               href="../../../genindex.html"/>
         <link rel="search" title="Search" href="../../../search.html"/>
-    <link rel="top" title="MetPy 0.6" href="../../../index.html"/>
+    <link rel="top" title="MetPy 0.7" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -79,7 +79,7 @@
                 
                   <div class="version-dropdown">
                     <select class="version-list" id="version-list">
-                      <option value=''>0.6</option>
+                      <option value=''>0.7</option>
                       
                         
                           <option value="../latest">latest</option>
@@ -189,7 +189,7 @@
            <div itemprop="articleBody">
             
   <h1>Source code for metpy.calc.tools</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Copyright (c) 2016,2017 MetPy Developers.</span>
+<span></span><span class="c1"># Copyright (c) 2016,2017,2018 MetPy Developers.</span>
 <span class="c1"># Distributed under the terms of the BSD 3-Clause License.</span>
 <span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
 <span class="sd">&quot;&quot;&quot;Contains a collection of generally useful calculation tools.&quot;&quot;&quot;</span>
@@ -213,6 +213,15 @@
 <span class="kn">from</span> <span class="nn">..units</span> <span class="k">import</span> <span class="n">atleast_1d</span><span class="p">,</span> <span class="n">check_units</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">diff</span><span class="p">,</span> <span class="n">units</span>
 
 <span class="n">exporter</span> <span class="o">=</span> <span class="n">Exporter</span><span class="p">(</span><span class="nb">globals</span><span class="p">())</span>
+
+<span class="n">DIR_STRS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;NNE&#39;</span><span class="p">,</span> <span class="s1">&#39;NE&#39;</span><span class="p">,</span> <span class="s1">&#39;ENE&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;ESE&#39;</span><span class="p">,</span> <span class="s1">&#39;SE&#39;</span><span class="p">,</span> <span class="s1">&#39;SSE&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;SSW&#39;</span><span class="p">,</span> <span class="s1">&#39;SW&#39;</span><span class="p">,</span> <span class="s1">&#39;WSW&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;WNW&#39;</span><span class="p">,</span> <span class="s1">&#39;NW&#39;</span><span class="p">,</span> <span class="s1">&#39;NNW&#39;</span>
+<span class="p">]</span>
+
+<span class="n">BASE_DEGREE_MULTIPLIER</span> <span class="o">=</span> <span class="mf">22.5</span> <span class="o">*</span> <span class="n">units</span><span class="o">.</span><span class="n">degree</span>
 
 
 <div class="viewcode-block" id="resample_nn_1d"><a class="viewcode-back" href="../../../api/generated/metpy.calc.resample_nn_1d.html#metpy.calc.resample_nn_1d">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
@@ -457,10 +466,10 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; metpy.calc.reduce_point_density(np.array([1, 2, 3]), 1.)</span>
-<span class="sd">    array([ True, False,  True], dtype=bool)</span>
+<span class="sd">    array([ True, False,  True])</span>
 <span class="sd">    &gt;&gt;&gt; metpy.calc.reduce_point_density(np.array([1, 2, 3]), 1.,</span>
 <span class="sd">    ... priority=np.array([0.1, 0.9, 0.3]))</span>
-<span class="sd">    array([False,  True, False], dtype=bool)</span>
+<span class="sd">    array([False,  True, False])</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Handle 1D input</span>
@@ -643,7 +652,7 @@
     <span class="c1"># If we want things in AGL, subtract the minimum height from all height values</span>
     <span class="k">if</span> <span class="n">with_agl</span><span class="p">:</span>
         <span class="n">sfc_height</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">heights</span><span class="p">)</span>
-        <span class="n">heights</span> <span class="o">-=</span> <span class="n">sfc_height</span>
+        <span class="n">heights</span> <span class="o">=</span> <span class="n">heights</span> <span class="o">-</span> <span class="n">sfc_height</span>
 
     <span class="c1"># If the bottom is not specified, make it the surface</span>
     <span class="k">if</span> <span class="n">bottom</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -834,7 +843,7 @@
 <span class="sd">     &gt;&gt;&gt; y = np.array([1., 2., 3., 4.])</span>
 <span class="sd">     &gt;&gt;&gt; x_interp = np.array([2.5, 3.5])</span>
 <span class="sd">     &gt;&gt;&gt; metpy.calc.interp(x_interp, x, y)</span>
-<span class="sd">     array([ 2.5,  3.5])</span>
+<span class="sd">     array([2.5, 3.5])</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -970,7 +979,7 @@
 <span class="sd">     &gt;&gt;&gt; y_log = np.log(x_log) * 2 + 3</span>
 <span class="sd">     &gt;&gt;&gt; x_interp = np.array([5e3, 5e4, 5e5])</span>
 <span class="sd">     &gt;&gt;&gt; metpy.calc.log_interp(x_interp, x_log, y_log)</span>
-<span class="sd">     array([ 20.03438638,  24.63955657,  29.24472675])</span>
+<span class="sd">     array([20.03438638, 24.63955657, 29.24472675])</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -1198,6 +1207,7 @@
     <span class="k">return</span> <span class="n">concatenate</span><span class="p">((</span><span class="n">left</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">right</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="gradient"><a class="viewcode-back" href="../../../api/generated/metpy.calc.gradient.html#metpy.calc.gradient">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
 <span class="k">def</span> <span class="nf">gradient</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Calculate the gradient of a grid of values.</span>
 
@@ -1227,7 +1237,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pos_kwarg</span><span class="p">,</span> <span class="n">positions</span> <span class="o">=</span> <span class="n">_process_gradient_args</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">first_derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">ind</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">pos_kwarg</span><span class="p">:</span> <span class="n">positions</span><span class="p">[</span><span class="n">ind</span><span class="p">]})</span>
-                 <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span>
+                 <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="laplacian"><a class="viewcode-back" href="../../../api/generated/metpy.calc.laplacian.html#metpy.calc.laplacian">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
@@ -1316,6 +1326,47 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Must specify either &quot;x&quot; or &quot;delta&quot; for value positions.&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">delta</span>
+
+
+<div class="viewcode-block" id="parse_angle"><a class="viewcode-back" href="../../../api/generated/metpy.calc.parse_angle.html#metpy.calc.parse_angle">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
+<span class="k">def</span> <span class="nf">parse_angle</span><span class="p">(</span><span class="n">input_dir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the meteorological angle from directional text.</span>
+
+<span class="sd">    Works for abbrieviations or whole words (E -&gt; 90 | South -&gt; 180)</span>
+<span class="sd">    and also is able to parse 22.5 degreee angles such as ESE/East South East</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_dir : string or array-like strings</span>
+<span class="sd">        Directional text such as west, [south-west, ne], etc</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    angle</span>
+<span class="sd">        The angle in degrees</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_dir</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">parse_angle</span><span class="p">(</span><span class="n">single_dir</span><span class="p">)</span> <span class="k">for</span> <span class="n">single_dir</span> <span class="ow">in</span> <span class="n">input_dir</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">input_dir</span> <span class="o">=</span> <span class="n">_abbrieviate_direction</span><span class="p">(</span><span class="n">input_dir</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">dir_str</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">DIR_STRS</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">input_dir</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">dir_str</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">i</span> <span class="o">*</span> <span class="n">BASE_DEGREE_MULTIPLIER</span></div>
+
+
+<span class="k">def</span> <span class="nf">_abbrieviate_direction</span><span class="p">(</span><span class="n">ext_dir_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert extended (non-abbrievated) directions to abbrieviation.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ext_dir_str</span>
+            <span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;NORTH&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;EAST&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;SOUTH&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;WEST&#39;</span><span class="p">,</span> <span class="s1">&#39;W&#39;</span><span class="p">)</span>
+            <span class="p">)</span>
 </pre></div>
 
            </div>
@@ -1331,7 +1382,7 @@
   <div role="contentinfo">
     <p>
         &copy; Copyright 2017, MetPy Developers.
-      Last updated on Jan 04, 2018 at 19:17:05.
+      Last updated on Apr 27, 2018 at 20:56:12.
 
     </p>
   </div>
@@ -1368,7 +1419,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.6.1+116.gba13b4c',
+            VERSION:'0.7.0+169.gf5572bf',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

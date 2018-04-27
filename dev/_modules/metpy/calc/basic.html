@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>metpy.calc.basic &mdash; MetPy 0.6</title>
+  <title>metpy.calc.basic &mdash; MetPy 0.7</title>
   
 
   
@@ -43,7 +43,7 @@
         <link rel="index" title="Index"
               href="../../../genindex.html"/>
         <link rel="search" title="Search" href="../../../search.html"/>
-    <link rel="top" title="MetPy 0.6" href="../../../index.html"/>
+    <link rel="top" title="MetPy 0.7" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -79,7 +79,7 @@
                 
                   <div class="version-dropdown">
                     <select class="version-list" id="version-list">
-                      <option value=''>0.6</option>
+                      <option value=''>0.7</option>
                       
                         
                           <option value="../latest">latest</option>
@@ -420,6 +420,58 @@
     <span class="k">return</span> <span class="n">hi</span></div>
 
 
+<div class="viewcode-block" id="apparent_temperature"><a class="viewcode-back" href="../../../api/generated/metpy.calc.apparent_temperature.html#metpy.calc.apparent_temperature">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
+<span class="nd">@check_units</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="s1">&#39;[temperature]&#39;</span><span class="p">,</span> <span class="n">speed</span><span class="o">=</span><span class="s1">&#39;[speed]&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">apparent_temperature</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">rh</span><span class="p">,</span> <span class="n">speed</span><span class="p">,</span> <span class="n">face_level_winds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the current apparent temperature.</span>
+
+<span class="sd">    Calculates the current apparent temperature based on the wind chill or heat index</span>
+<span class="sd">    as appropriate for the current conditions. Follows [NWS10201]_.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    temperature : `pint.Quantity`</span>
+<span class="sd">        The air temperature</span>
+<span class="sd">    rh : `pint.Quantity`</span>
+<span class="sd">        The relative humidity expressed as a unitless ratio in the range [0, 1].</span>
+<span class="sd">        Can also pass a percentage if proper units are attached.</span>
+<span class="sd">    speed : `pint.Quantity`</span>
+<span class="sd">        The wind speed at 10m.  If instead the winds are at face level,</span>
+<span class="sd">        `face_level_winds` should be set to `True` and the 1.5 multiplicative</span>
+<span class="sd">        correction will be applied automatically.</span>
+<span class="sd">    face_level_winds : bool, optional</span>
+<span class="sd">        A flag indicating whether the wind speeds were measured at facial</span>
+<span class="sd">        level instead of 10m, thus requiring a correction.  Defaults to</span>
+<span class="sd">        `False`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    `pint.Quantity`</span>
+<span class="sd">        The corresponding apparent temperature value(s)</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    heat_index, windchill</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wind_chill_temperature</span> <span class="o">=</span> <span class="n">windchill</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">speed</span><span class="p">,</span> <span class="n">face_level_winds</span><span class="o">=</span><span class="n">face_level_winds</span><span class="p">,</span>
+                                       <span class="n">mask_undefined</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">temperature</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+
+    <span class="n">heat_index_temperature</span> <span class="o">=</span> <span class="n">heat_index</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">rh</span><span class="p">,</span>
+                                        <span class="n">mask_undefined</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">temperature</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+
+    <span class="c1"># Combine the heat index and wind chill arrays (no point has a value in both)</span>
+    <span class="n">app_temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">wind_chill_temperature</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span>
+                                  <span class="n">heat_index_temperature</span><span class="p">,</span>
+                                  <span class="n">wind_chill_temperature</span><span class="p">)</span>
+
+    <span class="c1"># Fill in missing areas where neither wind chill or heat index are applicable with the</span>
+    <span class="c1"># ambient temperature.</span>
+    <span class="n">app_temperature</span><span class="p">[</span><span class="n">app_temperature</span><span class="o">.</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">temperature</span><span class="p">[</span><span class="n">app_temperature</span><span class="o">.</span><span class="n">mask</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">app_temperature</span><span class="p">)</span> <span class="o">*</span> <span class="n">temperature</span><span class="o">.</span><span class="n">units</span></div>
+
+
 <div class="viewcode-block" id="pressure_to_height_std"><a class="viewcode-back" href="../../../api/generated/metpy.calc.pressure_to_height_std.html#metpy.calc.pressure_to_height_std">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
 <span class="nd">@check_units</span><span class="p">(</span><span class="s1">&#39;[pressure]&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pressure_to_height_std</span><span class="p">(</span><span class="n">pressure</span><span class="p">):</span>
@@ -573,7 +625,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">latitude</span> <span class="o">=</span> <span class="n">_check_radians</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span> <span class="n">max_radians</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">omega</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">latitude</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">omega</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">latitude</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;1/s&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="add_height_to_pressure"><a class="viewcode-back" href="../../../api/generated/metpy.calc.add_height_to_pressure.html#metpy.calc.add_height_to_pressure">[docs]</a><span class="nd">@exporter</span><span class="o">.</span><span class="n">export</span>
@@ -714,7 +766,7 @@
   <div role="contentinfo">
     <p>
         &copy; Copyright 2017, MetPy Developers.
-      Last updated on Jan 04, 2018 at 19:17:05.
+      Last updated on Apr 27, 2018 at 20:56:12.
 
     </p>
   </div>
@@ -751,7 +803,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.6.1+116.gba13b4c',
+            VERSION:'0.7.0+169.gf5572bf',
             LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',

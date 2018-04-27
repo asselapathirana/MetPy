@@ -1,4 +1,4 @@
-# Copyright (c) 2017 MetPy Developers.
+# Copyright (c) 2017,2018 MetPy Developers.
 # Distributed under the terms of the BSD 3-Clause License.
 # SPDX-License-Identifier: BSD-3-Clause
 """
@@ -6,7 +6,7 @@
 Isentropic Analysis
 ===================
 
-The MetPy function `mcalc.isentropic_interpolation` allows for isentropic analysis from model
+The MetPy function `mpcalc.isentropic_interpolation` allows for isentropic analysis from model
 analysis data in isobaric coordinates.
 """
 
@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset, num2date
 import numpy as np
 
-import metpy.calc as mcalc
+import metpy.calc as mpcalc
 from metpy.cbook import get_test_data
-from metpy.plots import add_metpy_logo
+from metpy.plots import add_metpy_logo, add_timestamp
 from metpy.units import units
 
 #######################################
@@ -72,14 +72,14 @@ isentlevs = [296.] * units.kelvin
 # levels, and temperature be input. Any additional inputs (in this case relative humidity, u,
 # and v wind components) will be linearly interpolated to isentropic space.
 
-isent_anal = mcalc.isentropic_interpolation(isentlevs,
-                                            lev,
-                                            tmp,
-                                            spech,
-                                            uwnd,
-                                            vwnd,
-                                            hgt,
-                                            tmpk_out=True)
+isent_anal = mpcalc.isentropic_interpolation(isentlevs,
+                                             lev,
+                                             tmp,
+                                             spech,
+                                             uwnd,
+                                             vwnd,
+                                             hgt,
+                                             tmpk_out=True)
 
 #####################################
 # The output is a list, so now we will separate the variables to different names before
@@ -107,7 +107,7 @@ print(isenthgt.shape)
 # The NARR only gives specific humidity on isobaric vertical levels, so relative humidity will
 # have to be calculated after the interpolation to isentropic space.
 
-isentrh = 100 * mcalc.relative_humidity_from_specific_humidity(isentspech, isenttmp, isentprs)
+isentrh = 100 * mpcalc.relative_humidity_from_specific_humidity(isentspech, isenttmp, isentprs)
 
 #######################################
 # **Plotting the Isentropic Analysis**
@@ -128,30 +128,24 @@ bounds = [(-122., -75., 25., 50.)]
 # Choose a level to plot, in this case 296 K
 level = 0
 
-# Get data to plot state and province boundaries
-states_provinces = cfeature.NaturalEarthFeature(category='cultural',
-                                                name='admin_1_states_provinces_lakes',
-                                                scale='50m',
-                                                facecolor='none')
-
 fig = plt.figure(figsize=(17., 12.))
 add_metpy_logo(fig, 120, 245, size='large')
 ax = fig.add_subplot(1, 1, 1, projection=crs)
 ax.set_extent(*bounds, crs=ccrs.PlateCarree())
-ax.coastlines('50m', edgecolor='black', linewidth=0.75)
-ax.add_feature(states_provinces, edgecolor='black', linewidth=0.5)
+ax.add_feature(cfeature.COASTLINE.with_scale('50m'), linewidth=0.75)
+ax.add_feature(cfeature.STATES, linewidth=0.5)
 
 # Plot the surface
 clevisent = np.arange(0, 1000, 25)
 cs = ax.contour(tlons, tlats, isentprs[level, :, :], clevisent,
                 colors='k', linewidths=1.0, linestyles='solid')
-plt.clabel(cs, fontsize=10, inline=1, inline_spacing=7,
-           fmt='%i', rightside_up=True, use_clabeltext=True)
+ax.clabel(cs, fontsize=10, inline=1, inline_spacing=7,
+          fmt='%i', rightside_up=True, use_clabeltext=True)
 
 # Plot RH
 cf = ax.contourf(tlons, tlats, isentrh[level, :, :], range(10, 106, 5),
                  cmap=plt.cm.gist_earth_r)
-cb = plt.colorbar(cf, orientation='horizontal', extend='max', aspect=65, shrink=0.5, pad=0.05,
+cb = fig.colorbar(cf, orientation='horizontal', extend='max', aspect=65, shrink=0.5, pad=0.05,
                   extendrect='True')
 cb.set_label('Relative Humidity', size='x-large')
 
@@ -161,22 +155,22 @@ ut, vt = crs.transform_vectors(ccrs.PlateCarree(), lon, lat, isentu[level, :, :]
 ax.barbs(tlons, tlats, ut, vt, length=6, regrid_shape=20)
 
 # Make some titles
-plt.title('{:.0f} K Isentropic Pressure (hPa), Wind (kt), Relative Humidity (percent)'
-          .format(isentlevs[level].m),
-          loc='left')
-plt.title('VALID: {:s}'.format(str(vtimes[0])), loc='right')
-plt.tight_layout()
+ax.set_title('{:.0f} K Isentropic Pressure (hPa), Wind (kt), Relative Humidity (percent)'
+             .format(isentlevs[level].m), loc='left')
+ax.set_title('VALID: {:s}'.format(str(vtimes[0])), loc='right')
+fig.tight_layout()
+add_timestamp(ax, vtimes[0], y=0.02, high_contrast=True)
 
 ######################################
 # **Montgomery Streamfunction**
 #
 # The Montgomery Streamfunction, :math:`{\psi} = gdz + CpT`, is often desired because its
 # gradient is proportional to the geostrophic wind in isentropic space. This can be easily
-# calculated with `mcalc.montgomery_streamfunction`.
+# calculated with `mpcalc.montgomery_streamfunction`.
 
 
 # Calculate Montgomery Streamfunction and scale by 10^-2 for plotting
-msf = mcalc.montgomery_streamfunction(isenthgt, isenttmp) / 100.
+msf = mpcalc.montgomery_streamfunction(isenthgt, isenttmp) / 100.
 
 # Choose a level to plot, in this case 296 K
 level = 0
@@ -185,19 +179,19 @@ fig = plt.figure(figsize=(17., 12.))
 add_metpy_logo(fig, 120, 250, size='large')
 ax = plt.subplot(111, projection=crs)
 ax.set_extent(*bounds, crs=ccrs.PlateCarree())
-ax.coastlines('50m', edgecolor='black', linewidth=0.75)
-ax.add_feature(states_provinces, edgecolor='black', linewidth=0.5)
+ax.add_feature(cfeature.COASTLINE.with_scale('50m'), linewidth=0.75)
+ax.add_feature(cfeature.STATES.with_scale('50m'), linewidth=0.5)
 
 # Plot the surface
 clevmsf = np.arange(0, 4000, 5)
 cs = ax.contour(tlons, tlats, msf[level, :, :], clevmsf,
                 colors='k', linewidths=1.0, linestyles='solid')
-plt.clabel(cs, fontsize=10, inline=1, inline_spacing=7,
-           fmt='%i', rightside_up=True, use_clabeltext=True)
+ax.clabel(cs, fontsize=10, inline=1, inline_spacing=7,
+          fmt='%i', rightside_up=True, use_clabeltext=True)
 # Plot RH
 cf = ax.contourf(tlons, tlats, isentrh[level, :, :], range(10, 106, 5),
                  cmap=plt.cm.gist_earth_r)
-cb = plt.colorbar(cf, orientation='horizontal', extend='max', aspect=65, shrink=0.5, pad=0.05,
+cb = fig.colorbar(cf, orientation='horizontal', extend='max', aspect=65, shrink=0.5, pad=0.05,
                   extendrect='True')
 cb.set_label('Relative Humidity', size='x-large')
 
@@ -207,9 +201,11 @@ ut, vt = crs.transform_vectors(ccrs.PlateCarree(), lon, lat, isentu[level, :, :]
 ax.barbs(tlons, tlats, ut, vt, length=6, regrid_shape=20)
 
 # Make some titles
-plt.title('{:.0f} K Montgomery Streamfunction '.format(isentlevs[level].m) +
-          r'($10^{-2} m^2 s^{-2}$), ' +
-          'Wind (kt), Relative Humidity (percent)', loc='left')
-plt.title('VALID: {:s}'.format(str(vtimes[0])), loc='right')
-plt.tight_layout()
+ax.set_title('{:.0f} K Montgomery Streamfunction '.format(isentlevs[level].m) +
+             r'($10^{-2} m^2 s^{-2}$), ' +
+             'Wind (kt), Relative Humidity (percent)', loc='left')
+ax.set_title('VALID: {:s}'.format(str(vtimes[0])), loc='right')
+fig.tight_layout()
+add_timestamp(ax, vtimes[0], y=0.02, high_contrast=True)
+
 plt.show()
